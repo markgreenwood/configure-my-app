@@ -4,7 +4,7 @@ import {
   fetchConfigParamFromSSM,
   FetchConfiguration,
   getConfiguration,
-} from "../src/configuration";
+} from "../../src/configuration";
 
 describe("fetchConfigParamFromSSM", () => {
   it("should get a config param from SSM", async () => {
@@ -18,11 +18,6 @@ describe("fetchConfigParamFromSSM", () => {
 describe("getConfiguration", () => {
   // Uses actual SSM, should be stubbed for testing
   context("with the default fetchConfigParam", () => {
-    it("should get configuration params", async () => {
-      const result = await getConfiguration();
-      expect(result.database.user).to.equal("test-db-user");
-    });
-
     it("should have the expected structure", async () => {
       const expectedTopLevelKeys = ["database", "service"];
       const expectedDatabaseKeys = ["user", "name", "password", "host"];
