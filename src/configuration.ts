@@ -27,7 +27,7 @@ export type FetchParameter = (
   decrypt?: boolean,
 ) => Promise<string>;
 
-type ConfigParams = {
+export type ConfigParams = {
   databaseUser: string;
   databaseName: string;
   databasePassword: string;
@@ -35,37 +35,37 @@ type ConfigParams = {
   serviceHost: string;
 };
 
-type FetchConfig = () => Promise<ConfigParams>;
+export type FetchConfig = () => Promise<ConfigParams>;
+
+async function configParamFetcher(
+  fetchConfigParam: FetchParameter = fetchConfigParamFromSSM,
+): Promise<ConfigParams> {
+  const databaseUser = await fetchConfigParam(
+    "/databases/test-database/dbuser",
+  );
+  const databaseHost = await fetchConfigParam(
+    "/databases/test-database/dbhostname",
+  );
+  const databasePassword = await fetchConfigParam(
+    "/databases/test-database/dbpassword",
+  );
+  const databaseName = await fetchConfigParam(
+    "/databases/test-database/dbname",
+  );
+  const serviceHost = await fetchConfigParam("/services/test-service/hostname");
+  return {
+    databaseUser,
+    databaseName,
+    databaseHost,
+    databasePassword,
+    serviceHost,
+  };
+}
 
 export async function getConfiguration(
-  fetchConfigParam: FetchParameter = fetchConfigParamFromSSM,
+  configFetcher: FetchConfig = configParamFetcher,
 ) {
-  async function configParamFetcher(): Promise<ConfigParams> {
-    const databaseUser = await fetchConfigParam(
-      "/databases/test-database/dbuser",
-    );
-    const databaseHost = await fetchConfigParam(
-      "/databases/test-database/dbhostname",
-    );
-    const databasePassword = await fetchConfigParam(
-      "/databases/test-database/dbpassword",
-    );
-    const databaseName = await fetchConfigParam(
-      "/databases/test-database/dbname",
-    );
-    const serviceHost = await fetchConfigParam(
-      "/services/test-service/hostname",
-    );
-    return {
-      databaseUser,
-      databaseName,
-      databaseHost,
-      databasePassword,
-      serviceHost,
-    };
-  }
-
-  const params = await configParamFetcher();
+  const params = await configFetcher();
 
   return {
     database: {

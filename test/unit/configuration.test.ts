@@ -3,7 +3,9 @@ import { expect } from "chai";
 import {
   fetchConfigParamFromSSM,
   FetchParameter,
+  FetchConfig,
   getConfiguration,
+  ConfigParams,
 } from "../../src/configuration";
 
 describe("fetchConfigParamFromSSM", () => {
@@ -65,6 +67,34 @@ describe("getConfiguration", () => {
       return Promise.resolve(lookupTable[paramName]);
     };
 
+    const customConfigFetcher: FetchConfig = async (): Promise<
+      ConfigParams
+    > => {
+      const databaseUser = await customFetchConfigParam(
+        "/databases/test-database/dbuser",
+      );
+      const databaseHost = await customFetchConfigParam(
+        "/databases/test-database/dbhostname",
+      );
+      const databasePassword = await customFetchConfigParam(
+        "/databases/test-database/dbpassword",
+      );
+      const databaseName = await customFetchConfigParam(
+        "/databases/test-database/dbname",
+      );
+      const serviceHost = await customFetchConfigParam(
+        "/services/test-service/hostname",
+      );
+
+      return {
+        databaseUser,
+        databaseHost,
+        databasePassword,
+        databaseName,
+        serviceHost,
+      };
+    };
+
     it("should contain the expected contents", async () => {
       const expectedConfigContents = {
         database: {
@@ -79,7 +109,7 @@ describe("getConfiguration", () => {
           port: 3000,
         },
       };
-      const config = await getConfiguration(customFetchConfigParam);
+      const config = await getConfiguration(customConfigFetcher);
       expect(config).to.deep.equal(expectedConfigContents);
     });
   });
