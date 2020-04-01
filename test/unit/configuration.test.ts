@@ -2,7 +2,7 @@
 import { expect } from "chai";
 import {
   fetchConfigParamFromSSM,
-  FetchConfiguration,
+  FetchParameter,
   getConfiguration,
 } from "../../src/configuration";
 
@@ -11,7 +11,7 @@ describe("fetchConfigParamFromSSM", () => {
     const param = await fetchConfigParamFromSSM(
       "/services/test-service/hostname",
     );
-    expect(param).to.equal("the-test-service-hostname");
+    expect(param).to.equal("prod-service-hostname");
   });
 });
 
@@ -32,14 +32,14 @@ describe("getConfiguration", () => {
     it("should contain the expected contents", async () => {
       const expectedConfigContents = {
         database: {
-          user: "test-db-user",
-          name: "postgres",
-          host: "the-test-database-hostname",
-          password: "VerySecret",
+          user: "prod-db-user",
+          name: "prod-db-name",
+          host: "prod-db-hostname",
+          password: "ProdSecret",
         },
         service: {
-          scheme: "http",
-          host: "the-test-service-hostname",
+          scheme: "https",
+          host: "prod-service-hostname",
           port: 3000,
         },
       };
@@ -50,17 +50,16 @@ describe("getConfiguration", () => {
 
   // Tests that getConfiguration can use a supplied fetchConfigParam function
   context("with custom fetchConfigParam", () => {
-    const customFetchConfigParam: FetchConfiguration = (
+    const customFetchConfigParam: FetchParameter = (
       paramName: string,
       decrypt?: boolean,
     ) => {
       const lookupTable: { [index: string]: string } = {
-        "/databases/test-database/dbuser": "custom-test-db-user",
-        "/databases/test-database/dbname": "custom-postgres",
-        "/databases/test-database/dbpassword": "custom-VerySecret",
-        "/databases/test-database/dbhostname":
-          "custom-the-test-database-hostname",
-        "/services/test-service/hostname": "custom-the-test-service-hostname",
+        "/databases/test-database/dbuser": "custom-db-user",
+        "/databases/test-database/dbname": "custom-db-name",
+        "/databases/test-database/dbpassword": "CustomSecret",
+        "/databases/test-database/dbhostname": "custom-db-hostname",
+        "/services/test-service/hostname": "custom-service-hostname",
       };
 
       return Promise.resolve(lookupTable[paramName]);
@@ -69,14 +68,14 @@ describe("getConfiguration", () => {
     it("should contain the expected contents", async () => {
       const expectedConfigContents = {
         database: {
-          user: "custom-test-db-user",
-          name: "custom-postgres",
-          host: "custom-the-test-database-hostname",
-          password: "custom-VerySecret",
+          user: "custom-db-user",
+          name: "custom-db-name",
+          host: "custom-db-hostname",
+          password: "CustomSecret",
         },
         service: {
-          scheme: "http",
-          host: "custom-the-test-service-hostname",
+          scheme: "https",
+          host: "custom-service-hostname",
           port: 3000,
         },
       };

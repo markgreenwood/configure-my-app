@@ -22,38 +22,61 @@ export function fetchConfigParamFromSSM(
   );
 }
 
-export type FetchConfiguration = (
+export type FetchParameter = (
   paramName: string,
   decrypt?: boolean,
 ) => Promise<string>;
 
+type ConfigParams = {
+  databaseUser: string;
+  databaseName: string;
+  databasePassword: string;
+  databaseHost: string;
+  serviceHost: string;
+};
+
+type FetchConfig = () => Promise<ConfigParams>;
+
 export async function getConfiguration(
-  fetchConfigParam: FetchConfiguration = fetchConfigParamFromSSM,
+  fetchConfigParam: FetchParameter = fetchConfigParamFromSSM,
 ) {
-  const databaseUser = await fetchConfigParam(
-    "/databases/test-database/dbuser",
-  );
-  const databaseHost = await fetchConfigParam(
-    "/databases/test-database/dbhostname",
-  );
-  const databasePassword = await fetchConfigParam(
-    "/databases/test-database/dbpassword",
-  );
-  const databaseName = await fetchConfigParam(
-    "/databases/test-database/dbname",
-  );
-  const serviceHost = await fetchConfigParam("/services/test-service/hostname");
+  async function configParamFetcher(): Promise<ConfigParams> {
+    const databaseUser = await fetchConfigParam(
+      "/databases/test-database/dbuser",
+    );
+    const databaseHost = await fetchConfigParam(
+      "/databases/test-database/dbhostname",
+    );
+    const databasePassword = await fetchConfigParam(
+      "/databases/test-database/dbpassword",
+    );
+    const databaseName = await fetchConfigParam(
+      "/databases/test-database/dbname",
+    );
+    const serviceHost = await fetchConfigParam(
+      "/services/test-service/hostname",
+    );
+    return {
+      databaseUser,
+      databaseName,
+      databaseHost,
+      databasePassword,
+      serviceHost,
+    };
+  }
+
+  const params = await configParamFetcher();
 
   return {
     database: {
-      user: databaseUser,
-      name: databaseName,
-      host: databaseHost,
-      password: databasePassword,
+      user: params.databaseUser,
+      name: params.databaseName,
+      host: params.databaseHost,
+      password: params.databasePassword,
     },
     service: {
-      scheme: "http",
-      host: serviceHost,
+      scheme: "https",
+      host: params.serviceHost,
       port: 3000,
     },
   };

@@ -16,14 +16,14 @@ describe("getConfiguration from SSM", () => {
   it("should contain the expected contents", async () => {
     const expectedConfigContents = {
       database: {
-        user: "test-db-user",
-        name: "postgres",
-        host: "the-test-database-hostname",
-        password: "VerySecret",
+        user: "prod-db-user",
+        name: "prod-db-name",
+        host: "prod-db-hostname",
+        password: "ProdSecret",
       },
       service: {
-        scheme: "http",
-        host: "the-test-service-hostname",
+        scheme: "https",
+        host: "prod-service-hostname",
         port: 3000,
       },
     };
