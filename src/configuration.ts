@@ -2,13 +2,11 @@ import * as AWS from "aws-sdk";
 
 AWS.config.update({ region: "us-west-2" });
 
-export function fetchConfigParamFromSSM(
-  paramName: string,
-  decrypt: boolean = true,
-): Promise<string> {
-  const ssm = new AWS.SSM({ region: "us-west-2" });
+export const fetchConfigParamFromSSM: (ssmClient: AWS.SSM) => FetchParameter = (
+  ssmClient: AWS.SSM,
+) => (paramName: string, decrypt: boolean = true): Promise<string> => {
   return new Promise((resolve, reject) =>
-    ssm.getParameter(
+    ssmClient.getParameter(
       { Name: paramName, WithDecryption: decrypt },
       (err, data) => {
         if (err) {
@@ -20,7 +18,7 @@ export function fetchConfigParamFromSSM(
       },
     ),
   );
-}
+};
 
 export type FetchParameter = (
   paramName: string,
@@ -37,22 +35,25 @@ export type ConfigParams = {
 
 export type FetchConfig = () => Promise<ConfigParams>;
 
-async function configParamFetcher(
-  fetchConfigParam: FetchParameter = fetchConfigParamFromSSM,
+export async function configParamFetcher(
+  ssmClient: AWS.SSM = new AWS.SSM(),
 ): Promise<ConfigParams> {
-  const databaseUser = await fetchConfigParam(
-    "/databases/test-database/dbuser",
-  );
-  const databaseHost = await fetchConfigParam(
-    "/databases/test-database/dbhostname",
-  );
-  const databasePassword = await fetchConfigParam(
-    "/databases/test-database/dbpassword",
-  );
-  const databaseName = await fetchConfigParam(
-    "/databases/test-database/dbname",
-  );
-  const serviceHost = await fetchConfigParam("/services/test-service/hostname");
+  const fetchParam = fetchConfigParamFromSSM(ssmClient);
+
+  const [
+    databaseUser,
+    databaseHost,
+    databasePassword,
+    databaseName,
+    serviceHost,
+  ] = await Promise.all([
+    fetchParam("/databases/test-database/dbuser"),
+    fetchParam("/databases/test-database/dbhostname"),
+    fetchParam("/databases/test-database/dbpassword"),
+    fetchParam("/databases/test-database/dbname"),
+    fetchParam("/services/test-service/hostname"),
+  ]);
+
   return {
     databaseUser,
     databaseName,
@@ -62,11 +63,7 @@ async function configParamFetcher(
   };
 }
 
-export async function getConfiguration(
-  configFetcher: FetchConfig = configParamFetcher,
-) {
-  const params = await configFetcher();
-
+function configMapper(params: ConfigParams) {
   return {
     database: {
       user: params.databaseUser,
@@ -80,4 +77,11 @@ export async function getConfiguration(
       port: 3000,
     },
   };
+}
+
+export async function getConfiguration(
+  configFetcher: FetchConfig = configParamFetcher,
+) {
+  const params: ConfigParams = await configFetcher();
+  return configMapper(params);
 }
